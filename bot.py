@@ -1,25 +1,30 @@
-from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, InputMediaPhoto
+from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ApplicationBuilder, CommandHandler, CallbackQueryHandler, ContextTypes
 
-TOKEN = '7870153726:AAHNAJWQpMhk2UXe1iXwWBiNC59ojAMnbO8'  # এখানে নিজের BotFather থেকে নেওয়া টোকেন বসাও
-
-# ভাষা সেটাপ
+# ভাষা সেটআপ
 USER_LANGUAGE = {}
+
+TOKEN = '7870153726:AAHNAJWQpMhk2UXe1iXwWBiNC59ojAMnbO8'  # এখানে তোমার BotFather থেকে নেওয়া টোকেন বসাবে
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
     username = update.effective_user.first_name
-    USER_LANGUAGE[user_id] = 'en'  # Default language English
+    USER_LANGUAGE[user_id] = 'en'  # ডিফল্ট ইংরেজি
 
     welcome_text = f"👋🏻 **Hello {username}!**\n\nWelcome to Developer Help Bot.\nPlease select your language to continue:"
     keyboard = [
         [InlineKeyboardButton("🇧🇩 বাংলা", callback_data='set_lang_bn')],
         [InlineKeyboardButton("🇬🇧 English", callback_data='set_lang_en')],
     ]
-    await update.message.reply_text(welcome_text, reply_markup=InlineKeyboardMarkup(keyboard), parse_mode='Markdown')
+    await update.message.reply_text(
+        welcome_text,
+        reply_markup=InlineKeyboardMarkup(keyboard),
+        parse_mode='Markdown'
+    )
 
 async def language_selected(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
+    await query.message.delete()
     user_id = query.from_user.id
 
     if query.data == 'set_lang_bn':
@@ -30,8 +35,7 @@ async def language_selected(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await send_main_menu(update, context)
 
 async def send_main_menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    query = update.callback_query
-    user_id = query.from_user.id
+    user_id = update.effective_user.id
     lang = USER_LANGUAGE.get(user_id, 'en')
 
     text_en = "🏡 **Main Menu**\n\nChoose what you want to explore:"
@@ -48,16 +52,25 @@ async def send_main_menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
     ]
 
     text = text_en if lang == 'en' else text_bn
-    await query.edit_message_text(text=text, reply_markup=InlineKeyboardMarkup(keyboard), parse_mode='Markdown')
+
+    if update.callback_query:
+        await update.callback_query.message.delete()
+
+    await context.bot.send_message(
+        chat_id=user_id,
+        text=text,
+        reply_markup=InlineKeyboardMarkup(keyboard),
+        parse_mode='Markdown'
+    )
 
 async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
+    await query.answer()
+    await query.message.delete()
     user_id = query.from_user.id
     lang = USER_LANGUAGE.get(user_id, 'en')
 
-    await query.answer()
-
-    back_button = [InlineKeyboardButton("🔙 Back", callback_data='back_to_menu')]
+    back_button = InlineKeyboardButton("🔙 Back", callback_data='back_to_menu')
 
     if query.data == 'about':
         text = "👤 **About Me**\n\nHi, I'm Ayman Hasan Shaan, passionate about Web Development and Automation." if lang == 'en' else "👤 **আমার সম্পর্কে**\n\nআমি আয়মান হাসান শান, ওয়েব ডেভেলপমেন্ট এবং অটোমেশন নিয়ে কাজ করি।"
@@ -88,7 +101,12 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
             [InlineKeyboardButton("🔙 Back", callback_data='back_to_menu')],
         ]
         text = "🗂️ **My Projects**\n\nChoose a project to explore:"
-        await query.edit_message_text(text=text, reply_markup=InlineKeyboardMarkup(project_keyboard), parse_mode='Markdown')
+        await context.bot.send_message(
+            chat_id=user_id,
+            text=text,
+            reply_markup=InlineKeyboardMarkup(project_keyboard),
+            parse_mode='Markdown'
+        )
         return
 
     elif query.data.startswith('project_'):
@@ -99,7 +117,12 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await send_main_menu(update, context)
         return
 
-    await query.edit_message_text(text=text, reply_markup=InlineKeyboardMarkup([back_button]), parse_mode='Markdown')
+    await context.bot.send_message(
+        chat_id=user_id,
+        text=text,
+        reply_markup=InlineKeyboardMarkup(back_button),
+        parse_mode='Markdown'
+    )
 
 async def send_project_details(query, context):
     project_photos = {
@@ -113,13 +136,13 @@ async def send_project_details(query, context):
 
     title, photo_url = project_photos.get(query.data, ("Project", ""))
 
-    back_button = [InlineKeyboardButton("🔙 Back", callback_data='projects')]
+    back_button = InlineKeyboardButton("🔙 Back", callback_data='projects')
 
     await context.bot.send_photo(
-        chat_id=query.message.chat_id,
+        chat_id=query.from_user.id,
         photo=photo_url,
         caption=title,
-        reply_markup=InlineKeyboardMarkup([back_button]),
+        reply_markup=InlineKeyboardMarkup(back_button),
         parse_mode='Markdown'
     )
 
