@@ -38,7 +38,7 @@ async def language_selected(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     await send_main_menu(update, context, edit=True)
 
-# মেইন মেনু পাঠানো ফাংশন
+# মেনু পাঠানো ফাংশন
 async def send_main_menu(update: Update, context: ContextTypes.DEFAULT_TYPE, edit=False):
     user_id = update.effective_user.id
     lang = USER_LANGUAGE.get(user_id, 'en')
