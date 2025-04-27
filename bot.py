@@ -24,9 +24,9 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def language_selected(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
-    await query.message.delete()  # পূর্ববর্তী মেসেজটি মুছে ফেলা হবে
     user_id = query.from_user.id
 
+    # ভাষা পরিবর্তন
     if query.data == 'set_lang_bn':
         USER_LANGUAGE[user_id] = 'bn'
     else:
@@ -39,9 +39,11 @@ async def send_main_menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
     lang = USER_LANGUAGE.get(user_id, 'en')
 
+    # মেনু বার্তা
     text_en = "🏡 **Main Menu**\n\nChoose what you want to explore:"
     text_bn = "🏡 **প্রধান মেনু**\n\nআপনি কী জানতে চান?"
 
+    # মেনু অপশন
     keyboard = [
         [InlineKeyboardButton("👤 About Me", callback_data='about')],
         [InlineKeyboardButton("🛠️ Skills", callback_data='skills')],
@@ -59,9 +61,6 @@ async def send_main_menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
     ]
 
     text = text_en if lang == 'en' else text_bn
-
-    if update.callback_query:
-        await update.callback_query.message.delete()
 
     # মেনু সহ ভাষা পরিবর্তনের অপশন
     await context.bot.send_message(
