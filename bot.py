@@ -24,7 +24,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def language_selected(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
-    await query.message.delete()
+    await query.message.delete()  # পূর্ববর্তী মেসেজটি মুছে ফেলা হবে
     user_id = query.from_user.id
 
     if query.data == 'set_lang_bn':
@@ -32,6 +32,7 @@ async def language_selected(update: Update, context: ContextTypes.DEFAULT_TYPE):
     else:
         USER_LANGUAGE[user_id] = 'en'
 
+    # মেনু পাঠানো
     await send_main_menu(update, context)
 
 async def send_main_menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -49,6 +50,8 @@ async def send_main_menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
         [InlineKeyboardButton("🗂️ Projects", callback_data='projects')],
         [InlineKeyboardButton("📜 Privacy Policy", callback_data='privacy')],
         [InlineKeyboardButton("👨‍💻 Developer", callback_data='developer')],
+        [InlineKeyboardButton("🇧🇩 বাংলা", callback_data='set_lang_bn')],
+        [InlineKeyboardButton("🇬🇧 English", callback_data='set_lang_en')]
     ]
 
     text = text_en if lang == 'en' else text_bn
@@ -66,7 +69,6 @@ async def send_main_menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
-    await query.message.delete()
     user_id = query.from_user.id
     lang = USER_LANGUAGE.get(user_id, 'en')
 
