@@ -11,7 +11,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     USER_LANGUAGE[user_id] = 'en'  # Default language English
 
     # Lottie Animation (GIF version, কারণ টেলিগ্রাম সরাসরি Lottie JSON সাপোর্ট করে না)
-    animation_url = "https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExaWMyZjJ5c2N0NHI5cGJ1dnRsZ25nODNqNW93cHZqOGd0MG0yZjBvdiZlcD12MV9naWZzX3NlYXJjaCZjdD1n/3o7abldj0b3rxrZUxW/giphy.gif"
+    animation_url = "https://lottie.host/bf854b13-2663-4694-b082-9df976286f02/qxAoPgiNsp.lottie"
 
     await context.bot.send_animation(chat_id=update.effective_chat.id, animation=animation_url)
 
