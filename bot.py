@@ -109,10 +109,6 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await send_main_menu(update, context, edit=True)  
         return  
 
-    elif query.data.startswith('project_'):  
-        await send_project_details(update, context)  
-        return  
-
     await context.bot.edit_message_text(  
         chat_id=user_id,  
         message_id=USER_MESSAGE_ID[user_id],  
