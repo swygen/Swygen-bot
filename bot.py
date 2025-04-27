@@ -1,166 +1,176 @@
-from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
+from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, InputMediaPhoto
 from telegram.ext import ApplicationBuilder, CommandHandler, CallbackQueryHandler, ContextTypes
 
-# ভাষা সেটআপ
-USER_LANGUAGE = {}
-
-TOKEN = '7870153726:AAHNAJWQpMhk2UXe1iXwWBiNC59ojAMnbO8'  # এখানে তোমার BotFather থেকে নেওয়া টোকেন বসাবে
-
+# Start command
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    user_id = update.effective_user.id
-    username = update.effective_user.first_name
-    USER_LANGUAGE[user_id] = 'en'  # ডিফল্ট ইংরেজি
-
-    welcome_text = f"👋🏻 **Hello {username}!**\n\nWelcome to Developer Help Bot.\nPlease select your language to continue:"
     keyboard = [
-        [InlineKeyboardButton("🇧🇩 বাংলা", callback_data='set_lang_bn')],
-        [InlineKeyboardButton("🇬🇧 English", callback_data='set_lang_en')],
+        [InlineKeyboardButton("🇬🇧 English", callback_data='lang_en'),
+         InlineKeyboardButton("🇧🇩 বাংলা", callback_data='lang_bn')]
     ]
-    await update.message.reply_text(
-        welcome_text,
-        reply_markup=InlineKeyboardMarkup(keyboard),
-        parse_mode='Markdown'
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    await update.message.reply_photo(
+        photo="https://i.postimg.cc/7PQgNm10/20250427-172406.jpg",  # তোমার Banner ছবি
+        caption="✨ **Welcome to Developer SwygeN Bot!**\n\nSelect your language to start:",
+        reply_markup=reply_markup,
+        parse_mode='MarkdownV2'
     )
 
-async def language_selected(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    query = update.callback_query
-    user_id = query.from_user.id
-
-    # ভাষা পরিবর্তন
-    if query.data == 'set_lang_bn':
-        USER_LANGUAGE[user_id] = 'bn'
-    else:
-        USER_LANGUAGE[user_id] = 'en'
-
-    # মেনু পাঠানো
-    await send_main_menu(update, context)
-
-async def send_main_menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    user_id = update.effective_user.id
-    lang = USER_LANGUAGE.get(user_id, 'en')
-
-    # মেনু বার্তা
-    text_en = "🏡 **Main Menu**\n\nChoose what you want to explore:"
-    text_bn = "🏡 **প্রধান মেনু**\n\nআপনি কী জানতে চান?"
-
-    # মেনু অপশন
-    keyboard = [
-        [InlineKeyboardButton("👤 About Me", callback_data='about')],
-        [InlineKeyboardButton("🛠️ Skills", callback_data='skills')],
-        [InlineKeyboardButton("🌐 Website", callback_data='website')],
-        [InlineKeyboardButton("📞 Contact", callback_data='contact')],
-        [InlineKeyboardButton("🗂️ Projects", callback_data='projects')],
-        [InlineKeyboardButton("📜 Privacy Policy", callback_data='privacy')],
-        [InlineKeyboardButton("👨‍💻 Developer", callback_data='developer')],
-    ]
-
-    # ভাষা পরিবর্তন অপশন
-    language_keyboard = [
-        [InlineKeyboardButton("🇧🇩 বাংলা", callback_data='set_lang_bn')],
-        [InlineKeyboardButton("🇬🇧 English", callback_data='set_lang_en')]
-    ]
-
-    text = text_en if lang == 'en' else text_bn
-
-    # মেনু সহ ভাষা পরিবর্তনের অপশন
-    await context.bot.send_message(
-        chat_id=user_id,
-        text=text,
-        reply_markup=InlineKeyboardMarkup(keyboard + language_keyboard),  # ভাষা অপশন যোগ করা হয়েছে
-        parse_mode='Markdown'
-    )
-
-async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
+# Language selection
+async def lang_select(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
-    user_id = query.from_user.id
-    lang = USER_LANGUAGE.get(user_id, 'en')
 
-    back_button = InlineKeyboardButton("🔙 Back", callback_data='back_to_menu')
+    lang = query.data
+    if lang == "lang_en":
+        context.user_data['lang'] = "en"
+        await show_menu_en(query)
+    elif lang == "lang_bn":
+        context.user_data['lang'] = "bn"
+        await show_menu_bn(query)
 
-    if query.data == 'about':
-        text = "👤 **About Me**\n\nHi, I'm Ayman Hasan Shaan, passionate about Web Development and Automation." if lang == 'en' else "👤 **আমার সম্পর্কে**\n\nআমি আয়মান হাসান শান, ওয়েব ডেভেলপমেন্ট এবং অটোমেশন নিয়ে কাজ করি।"
-
-    elif query.data == 'skills':
-        text = "🛠️ **Skills**\n\n- Python\n- HTML, CSS, JS\n- Telegram Bots\n- Automation Scripts\n- PHP\n- Node.js\n- React" if lang == 'en' else "🛠️ **স্কিলস**\n\n- পাইথন\n- এইচটিএমএল, সিএসএস, জাভাস্ক্রিপ্ট\n- টেলিগ্রাম বটস\n- অটোমেশন স্ক্রিপ্টস\n- পিএইচপি\n- নোড.জেএস\n- রিয়েক্ট"
-
-    elif query.data == 'website':
-        text = "🌐 Visit my website: [Click Here](https://swygen.netlify.app/)"
-
-    elif query.data == 'contact':
-        text = "📞 **Contact Info**\n\n- Email: swygenofficial@gmail.com\n- Telegram: @Swygen_bd" if lang == 'en' else "📞 **যোগাযোগের তথ্য**\n\n- ইমেইল: swygenofficial@gmail.com\n- টেলিগ্রাম: @Swygen_bd"
-
-    elif query.data == 'privacy':
-        text = "📜 [Read our Privacy Policy](https://swygen.netlify.app/police)"
-
-    elif query.data == 'developer':
-        text = "👨‍💻 **Developer**\n\nBot developed by Swygen Official."
-
-    elif query.data == 'projects':
-        project_keyboard = [
-            [InlineKeyboardButton("🌐 Website Developer", callback_data='project_website')],
-            [InlineKeyboardButton("📱 App Developer", callback_data='project_app')],
-            [InlineKeyboardButton("🎨 UI/UX Designer", callback_data='project_uiux')],
-            [InlineKeyboardButton("🤖 Chat Bot Developer", callback_data='project_chatbot')],
-            [InlineKeyboardButton("☎️ Customer Support", callback_data='project_support')],
-            [InlineKeyboardButton("👨‍💻 Programming", callback_data='project_programming')],
-            [InlineKeyboardButton("🔙 Back", callback_data='back_to_menu')],
-        ]
-        text = "🗂️ **My Projects**\n\nChoose a project to explore:"
-        await context.bot.send_message(
-            chat_id=user_id,
-            text=text,
-            reply_markup=InlineKeyboardMarkup(project_keyboard),
-            parse_mode='Markdown'
-        )
-        return
-
-    elif query.data.startswith('project_'):
-        await send_project_details(query, context)
-        return
-
-    elif query.data == 'back_to_menu':
-        await send_main_menu(update, context)
-        return
-
-    await context.bot.send_message(
-        chat_id=user_id,
-        text=text,
-        reply_markup=InlineKeyboardMarkup(back_button),
-        parse_mode='Markdown'
+# Main Menu EN
+async def show_menu_en(query):
+    keyboard = [
+        [InlineKeyboardButton("👤 Profile", callback_data='profile_en')],
+        [InlineKeyboardButton("💼 Projects", callback_data='projects_en')],
+        [InlineKeyboardButton("✉️ Contact", callback_data='contact_en')],
+        [InlineKeyboardButton("🌐 Website", url="https://example.com")],
+        [InlineKeyboardButton("🔒 Privacy Policy", url="https://example.com/privacy")],
+        [InlineKeyboardButton("⚡ Powered by Swygen", url="https://t.me/swygenofficial")]
+    ]
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    await query.edit_message_caption(
+        caption="✨ **Main Menu \English\**\n\nPlease choose an option below:",
+        reply_markup=reply_markup,
+        parse_mode='MarkdownV2'
     )
 
-async def send_project_details(query, context):
-    project_photos = {
-        'project_website': ("🌐 **Website Development**", "https://assets.onecompiler.app/43ea4pg72/43fr339cx/web-development-flat-landing-page-creative-team-designers-developers-work-together-illustration-full-stack-development-software-engineering-web-page-composition-with-people-characters_9209-3545.webp"),
-        'project_app': ("📱 **App Development**", "https://i.postimg.cc/JnRTm9fF/app-development-banner-33099-1720.webp"),
-        'project_uiux': ("🎨 **UI/UX Design**", "https://i.postimg.cc/QCySQVFL/realistic-ui-ux-background-23-2149046824.webp"),
-        'project_chatbot': ("🤖 **Chat Bot**", "https://i.postimg.cc/YSHRf5CS/chat-bot-concept-illustration-114360-5223.webp"),
-        'project_support': ("☎️ **Customer Support**", "https://i.postimg.cc/sxv4gywT/organic-flat-design-customer-support-23-2148887076.webp"),
-        'project_programming': ("👨‍💻 **Programming**", "https://i.postimg.cc/VvpBSThm/flat-composition-with-programmer-testing-programs-illustration-1284-55908.webp"),
-    }
-
-    title, photo_url = project_photos.get(query.data, ("Project", ""))
-
-    back_button = InlineKeyboardButton("🔙 Back", callback_data='projects')
-
-    await context.bot.send_photo(
-        chat_id=query.from_user.id,
-        photo=photo_url,
-        caption=title,
-        reply_markup=InlineKeyboardMarkup(back_button),
-        parse_mode='Markdown'
+# Main Menu BN
+async def show_menu_bn(query):
+    keyboard = [
+        [InlineKeyboardButton("👤 প্রোফাইল", callback_data='profile_bn')],
+        [InlineKeyboardButton("💼 প্রজেক্টসমূহ", callback_data='projects_bn')],
+        [InlineKeyboardButton("✉️ যোগাযোগ", callback_data='contact_bn')],
+        [InlineKeyboardButton("🌐 ওয়েবসাইট", url="https://example.com")],
+        [InlineKeyboardButton("🔒 গোপনীয়তা নীতি", url="https://example.com/privacy")],
+        [InlineKeyboardButton("⚡ Powered by Swygen", url="https://t.me/swygenofficial")]
+    ]
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    await query.edit_message_caption(
+        caption="✨ **মেইন মেনু \বাংলা\**\n\nনিচের অপশন থেকে বেছে নিন:",
+        reply_markup=reply_markup,
+        parse_mode='MarkdownV2'
     )
 
-async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text("Use /start to restart the bot.")
+# Profile EN
+async def profile_en(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    query = update.callback_query
+    await query.answer()
+    keyboard = InlineKeyboardButton("🔙 Back", callback_data='lang_en')
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    await query.edit_message_media(
+        media=InputMediaPhoto(
+            media="https://assets.onecompiler.app/43ea4pg72/43ejdw4bt/Grey%20Yellow%20Minimalist%20Software%20Development%20Logo.png",  # তোমার প্রোফাইল Photo
+            caption="👤 **About Me**\n\n"
+                    "• Name: **Ayman Hasan Shaan**\n"
+                    "• Skills: Python \\| Telegram Bots \\| Web Developer\n"
+                    "• Experience: 3+ Years\n\n"
+                    "⚡ **Bringing ideas into reality\\!**\n\n"
+                    "🌐 **Social Links**:\n"
+                    "• Instagram: [@swygenofficial](https://instagram.com/swygenofficial)\n"
+                    "• GitHub: [Swygen GitHub](https://github.com/swygen-bd-dev)\n"
+                    "• WhatsApp: [Chat with me](https://wa.me/message/BQ77IMY2MHW6E1)\n"
+                    "• Facebook: [My Facebook](https://facebook.com/ayman.hasan.shaan)\n",
+            parse_mode='MarkdownV2'
+        ),
+        reply_markup=reply_markup
+    )
 
-if __name__ == '__main__':
-    app = ApplicationBuilder().token(TOKEN).build()
+# Profile BN
+async def profile_bn(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    query = update.callback_query
+    await query.answer()
+    keyboard = InlineKeyboardButton("🔙 ফিরে যান", callback_data='lang_bn')
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    await query.edit_message_media(
+        media=InputMediaPhoto(
+            media="https://telegra.ph/file/8c7c3c5a9b27ea915d1b1.jpg",
+            caption="👤 **আমার সম্পর্কে**\n\n"
+                    "• নাম: **আয়মান হাসান শান**\n"
+                    "• দক্ষতা: পাইথন \\| টেলিগ্রাম বট \\| ওয়েব ডেভেলপার\n"
+                    "• অভিজ্ঞতা: ৩+ বছর\n\n"
+                    "⚡ **আপনার আইডিয়াকে বাস্তবে রূপ দিই\\!**\n\n"
+                    "🌐 **সোশ্যাল লিঙ্ক**:\n"
+                    "• Instagram: [@swygenofficial](https://instagram.com/swygenofficial)\n"
+                    "• GitHub: [Swygen GitHub](https://github.com/swygen-bd-dev)\n"
+                    "• WhatsApp: [আমার সাথে কথা বলুন](https://wa.me/message/BQ77IMY2MHW6E1)\n"
+                    "• Facebook: [আমার Facebook](https://facebook.com/ayman.hasan.shaan)\n",
+            parse_mode='MarkdownV2'
+        ),
+        reply_markup=reply_markup
+    )
+
+# Projects EN
+async def projects_en(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    query = update.callback_query
+    await query.answer()
+    keyboard = InlineKeyboardButton("🔙 Back", callback_data='lang_en')
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    await query.edit_message_caption(
+        caption="💼 **Projects**\n\n• Premium Telegram Bots\n• Full Stack Web Development\n• API Integration & Automation",
+        reply_markup=reply_markup,
+        parse_mode='MarkdownV2'
+    )
+
+# Projects BN
+async def projects_bn(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    query = update.callback_query
+    await query.answer()
+    keyboard = InlineKeyboardButton("🔙 ফিরে যান", callback_data='lang_bn')
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    await query.edit_message_caption(
+        caption="💼 **প্রজেক্টসমূহ**\n\n• প্রিমিয়াম টেলিগ্রাম বট\n• ফুল স্ট্যাক ওয়েব ডেভেলপমেন্ট\n• এপিআই ইন্টিগ্রেশন ও অটোমেশন",
+        reply_markup=reply_markup,
+        parse_mode='MarkdownV2'
+    )
+
+# Contact EN
+async def contact_en(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    query = update.callback_query
+    await query.answer()
+    keyboard = InlineKeyboardButton("🔙 Back", callback_data='lang_en')
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    await query.edit_message_caption(
+        caption="✉️ **Contact Info**\n\nEmail: swygenofficial@gmail.com\nTelegram: @swygenofficial",
+        reply_markup=reply_markup,
+        parse_mode='MarkdownV2'
+    )
+
+# Contact BN
+async def contact_bn(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    query = update.callback_query
+    await query.answer()
+    keyboard = InlineKeyboardButton("🔙 ফিরে যান", callback_data='lang_bn')
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    await query.edit_message_caption(
+        caption="✉️ **যোগাযোগ করুন**\n\nইমেইল: swygenofficial@gmail.com\nটেলিগ্রাম: @swygenofficial",
+        reply_markup=reply_markup,
+        parse_mode='MarkdownV2'
+    )
+
+def main():
+    app = ApplicationBuilder().token('7870153726:AAHNAJWQpMhk2UXe1iXwWBiNC59ojAMnbO8').build()
 
     app.add_handler(CommandHandler('start', start))
-    app.add_handler(CommandHandler('help', help_command))
-    app.add_handler(CallbackQueryHandler(language_selected, pattern='^set_lang_'))
-    app.add_handler(CallbackQueryHandler(button_handler))
+    app.add_handler(CallbackQueryHandler(lang_select, pattern='^lang_'))
+    app.add_handler(CallbackQueryHandler(profile_en, pattern='^profile_en$'))
+    app.add_handler(CallbackQueryHandler(profile_bn, pattern='^profile_bn$'))
+    app.add_handler(CallbackQueryHandler(projects_en, pattern='^projects_en$'))
+    app.add_handler(CallbackQueryHandler(projects_bn, pattern='^projects_bn$'))
+    app.add_handler(CallbackQueryHandler(contact_en, pattern='^contact_en$'))
+    app.add_handler(CallbackQueryHandler(contact_bn, pattern='^contact_bn$'))
 
     app.run_polling()
+
+if __name__ == '__main__':
+    main()
